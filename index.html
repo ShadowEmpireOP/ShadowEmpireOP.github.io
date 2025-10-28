@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWE | Shadow Empire</title>
+    <!-- Einbindung der Poppins-Schriftart für modernes Design -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Einbindung von Font Awesome für Icons (Krone, Feuer, Discord) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* --- 1. Globale Stile & Farbschema --- */
+        :root {
+            --color-dark: #0A0A0A;
+            --color-text-light: #E0E0E0;
+            --color-fire: #FF4500; /* Hauptakzent Feuer-Rot */
+            --color-fire-glow: rgba(255, 69, 0, 0.8);
+            --color-opsucht-blue: #00BFFF; /* OPSucht-Blau */
+            --color-glass-bg: rgba(20, 20, 20, 0.6);
+            --color-glass-border: rgba(255, 255, 255, 0.1);
+            --color-card-bg: rgba(30, 30, 30, 0.7);
+        }
+
+        body {
+            background-color: var(--color-dark);
+            color: var(--color-text-light);
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* --- Liquid Glass Effekt (Basis) --- */
+        .glass-effect {
+            background: var(--color-glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--color-glass-border);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* --- Spezifische Farben & Texte --- */
+        .opsucht-blue {
+            color: var(--color-opsucht-blue); /* Leuchtendes Blau für OPSucht */
+            font-weight: 600;
+        }
+
+        .empire-text {
+            color: #FFFFFF; /* Weiße Schrift für Kontrast im Header */
+            text-shadow: 0 0 5px var(--color-fire-glow);
+        }
+
+        .highlight-contact {
+            color: var(--color-fire);
+            font-weight: 700;
+            text-shadow: 0 0 5px var(--color-fire-glow);
+        }
+        
+        /* Developer und Owner Text */
+        .developer-info {
+            font-size: 1em;
+            color: #A0A0A0;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+
+        .developer-info span {
+            color: var(--color-fire);
+            font-weight: 600;
+        }
+
+        /* --- 2. Hintergrund Animation (Liquid Touch - stärkerer Effekt) --- */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Dynamischer, feuriger Hintergrund mit subtilen blauen Elementen */
+            background: 
+                radial-gradient(circle at 10% 20%, rgba(255, 69, 0, 0.1) 0%, transparent 30%),
+                radial-gradient(circle at 90% 80%, rgba(0, 191, 255, 0.08) 0%, transparent 30%),
+                linear-gradient(135deg, rgba(10, 10, 10, 1) 0%, rgba(30, 0, 0, 1) 100%);
+            z-index: -1;
+            animation: backgroundPulse 25s infinite alternate ease-in-out;
+        }
+
+        @keyframes backgroundPulse {
+            0% { transform: scale(1); opacity: 0.9; }
+            100% { transform: scale(1.05); opacity: 1; }
+        }
+
+        /* --- 3. Header & Navigation --- */
+        header {
+            position: fixed;
+            width: calc(100% - 40px);
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            border-radius: 20px;
+        }
+
+        .logo {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--color-fire); /* SWE in Feuer-Rot */
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(255, 69, 0, 0.5);
+        }
+
+        nav a {
+            color: var(--color-text-light);
+            text-decoration: none;
+            margin-left: 25px;
+            font-weight: 400;
+            transition: color 0.3s, text-shadow 0.3s;
+        }
+
+        nav a:hover {
+            color: var(--color-fire);
+            text-shadow: 0 0 8px var(--color-fire-glow);
+        }
+
+        /* --- 4. Buttons im Glas-Stil --- */
+        .btn-glass {
+            background: var(--color-fire-glow);
+            color: #FFFFFF;
+            padding: 10px 25px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 69, 0, 0.3);
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.4);
+            transition: all 0.3s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-glass:hover {
+            background: var(--color-fire);
+            box-shadow: 0 6px 20px var(--color-fire-glow);
+            transform: translateY(-2px);
+        }
+
+        .btn-hero-glass {
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border-radius: 12px;
+        }
+        
+        .btn-discord {
+            /* Stil für den Discord Button, falls er in Zukunft wieder gebraucht wird */
+            background: rgba(88, 101, 242, 0.8);
+            border: 1px solid rgba(88, 101, 242, 0.3);
+            box-shadow: 0 4px 15px rgba(88, 101, 242, 0.4);
+        }
+
+        .btn-discord:hover {
+            background: #5865F2;
+            box-shadow: 0 6px 20px rgba(88, 101, 242, 0.6);
+        }
+
+        /* --- 5. Hero-Sektion --- */
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            /* Reiner dunkler Hintergrund für die Hero-Sektion */
+            background: linear-gradient(to bottom, #000000 0%, #1A0500 100%); 
+            position: relative;
+            padding: 0 20px;
+            overflow: hidden; 
+        }
+        
+        .hero-section::after { /* Starkes Glühen vom Boden (Feuer) */
+            content: '';
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 300px;
+            background: radial-gradient(circle at center, rgba(255, 69, 0, 0.4) 0%, transparent 60%);
+            z-index: 1;
+            animation: fireGlow 10s infinite alternate;
+        }
+
+        @keyframes fireGlow {
+            0% { opacity: 0.5; transform: scale(1); }
+            100% { opacity: 0.8; transform: scale(1.1); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            padding-top: 100px;
+        }
+
+        .hero-content h1 {
+            font-size: 4.5em;
+            color: #FFFFFF;
+            text-shadow: 0 0 30px var(--color-fire-glow), 0 0 15px rgba(255, 255, 255, 0.7); /* Verstärktes Glühen */
+            margin-bottom: 20px;
+            letter-spacing: 3px;
+        }
+
+        .hero-content p {
+            font-size: 1.3em;
+            margin-bottom: 40px;
+            color: #F0F0F0;
+        }
+
+        /* --- 6. Inhalts-Sektionen (Glass Cards) --- */
+        .content-section {
+            max-width: 1000px; 
+            margin: 60px auto;
+            padding: 40px;
+            border-radius: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .content-section h2 {
+            font-size: 2.8em;
+            color: var(--color-fire);
+            text-align: center;
+            margin-bottom: 40px;
+            text-shadow: 0 0 8px var(--color-fire-glow);
+        }
+
+        /* About Grid (Ziele) */
+        .about-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            text-align: center;
+        }
+
+        .about-item {
+            background: var(--color-card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid rgba(255, 69, 0, 0.2); 
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .about-item:hover {
+            transform: translateY(-8px); 
+            box-shadow: 0 15px 40px rgba(255, 69, 0, 0.3); 
+        }
+
+        .about-item i {
+            font-size: 3em;
+            color: var(--color-fire);
+            margin-bottom: 15px;
+            text-shadow: 0 0 12px var(--color-fire-glow);
+            animation: pulseIcon 2s infinite alternate;
+        }
+        
+        @keyframes pulseIcon {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.05); opacity: 1; }
+        }
+
+        .about-item h3 {
+            font-size: 1.8em;
+            color: #FFFFFF;
+            margin-bottom: 10px;
+        }
+        
+        /* Stats Sektion */
+        .stats-grid {
+            display: flex;
+            justify-content: space-around;
+            gap: 20px;
+        }
+
+        .stat-item {
+            background: var(--color-card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            flex: 1;
+            max-width: 300px;
+            border: 1px solid rgba(0, 191, 255, 0.2); 
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-item:last-child {
+            /* Discord Karte abheben */
+            background: rgba(88, 101, 242, 0.2);
+            border: 1px solid rgba(88, 101, 242, 0.5);
+        }
+
+        .stat-item .stat-number {
+            font-size: 3.5em;
+            font-weight: 700;
+            color: var(--color-fire);
+            text-shadow: 0 0 10px var(--color-fire-glow);
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        /* Join Sektion */
+        .join-section {
+            text-align: center;
+        }
+
+        .join-instructions {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 30px;
+            margin-top: 30px; /* Zusätzlicher Abstand nach oben, da der Button fehlt */
+        }
+        
+        .highlight-contact {
+            color: var(--color-fire);
+            font-weight: 700;
+            text-shadow: 0 0 5px var(--color-fire-glow);
+        }
+
+        .join-question {
+            margin-top: 20px; /* Etwas weniger Abstand */
+            font-size: 1.2em;
+            font-style: italic;
+            color: #B0B0B0;
+        }
+
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 30px;
+            margin-top: 80px;
+            font-size: 0.9em;
+            color: #A0A0A0;
+            margin-bottom: 20px;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+            width: calc(100% - 40px);
+        }
+
+        /* --- 7. Responsive Design (Mobile First) --- */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px 20px;
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                width: calc(100% - 20px);
+            }
+            
+            .logo {
+                font-size: 1.5em;
+            }
+
+            nav a {
+                margin: 5px 10px;
+                font-size: 0.9em;
+            }
+
+            .hero-content h1 {
+                font-size: 3em;
+            }
+
+            .content-section {
+                margin: 40px 10px;
+                padding: 20px;
+            }
+
+            .about-grid, .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Hintergrund Animation für den Liquid-Touch -->
+    <div class="background-animation"></div> 
+
+    <!-- Header im Liquid Glass Stil -->
+    <header class="glass-effect">
+        <div class="logo">SWE <span class="empire-text">SHADOW EMPIRE</span></div>
+        <nav>
+            <a href="#home">Home</a>
+            <a href="#about">Über uns</a>
+            <a href="#success">Erfolge</a>
+            <a href="#join" class="btn-glass">Beitreten</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Hero Sektion -->
+        <section id="home" class="hero-section">
+            <div class="hero-content">
+                <h1>DAS SHADOW EMPIRE HERRSCHT</h1>
+                <p>Wir sind ein aktiver Clan auf dem <span class="opsucht-blue">OPSucht</span> CityBuild-Server, bekannt für unsere Präsenz und unseren Clan Plot.</p>
+                <a href="#join" class="btn-hero-glass">Dein Platz im Imperium</a>
+            </div>
+        </section>
+
+        <!-- Über uns Sektion (Ziele) im Liquid Glass Stil -->
+        <section id="about" class="content-section glass-effect">
+            <h2>WER WIR SIND</h2>
+            <div class="about-grid">
+                <div class="about-item">
+                    <i class="fas fa-hammer"></i>
+                    <h3>Clan Plot</h3>
+                    <p>Unser Ziel ist es, den Clan Plot (Clan Bauplatz) zu einem der beeindruckendsten Bauwerke auf <span class="opsucht-blue">OPSucht</span> zu machen.</p>
+                </div>
+                <div class="about-item">
+                    <i class="fas fa-handshake"></i>
+                    <h3>Einheit</h3>
+                    <p>Zusammenhalt ist unsere Stärke. Jedes Shadow-Mitglied zählt und unterstützt das Team.</p>
+                </div>
+                <div class="about-item">
+                    <i class="fas fa-fire"></i>
+                    <h3>Aktivität</h3>
+                    <p>Wir legen Wert auf eine aktive und leidenschaftliche Teilnahme unserer Mitglieder im Spiel und in der Community.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Erfolge Sektion im Liquid Glass Stil -->
+        <section id="success" class="content-section glass-effect">
+            <h2>UNSERE TRIUMPHE</h2>
+            <div class="stats-grid">
+                <!-- Allgemeine Erfolge ohne Versprechen -->
+                <div class="stat-item">
+                    <span class="stat-number">TOP</span>
+                    <p>Aktivität im Clan-Ranking</p>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number"><i class="fas fa-users" style="color: var(--color-fire);"></i></span>
+                    <p>Wachsende Community</p>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">DISCORD</span>
+                    <p>Aktive Kommunikation</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Beitritt Sektion im Liquid Glass Stil -->
+        <section id="join" class="content-section glass-effect join-section">
+            <h2>WIRST DU EIN SCHATTEN?</h2>
+            <p>Wenn du ein Teil des Shadow Empire werden möchtest, kontaktiere uns!</p>
+            
+            <p class="join-instructions">Dann schreibe <span class="highlight-contact">picto_19</span> auf Discord.</p>
+            
+            <!-- Der Link und der Button wurden entfernt, wie gewünscht -->
+
+        </section>
+    </main>
+
+    <!-- Footer im Liquid Glass Stil -->
+    <footer class="glass-effect">
+        <p>&copy; 2025 Shadow Empire. Eine aktive Gemeinschaft auf <span class="opsucht-blue">OPSucht</span>.</p>
+        <div class="developer-info">
+            <p>Owner: <span>Picto_19</span></p>
+            <p>Developer dieser Website: <span>.EntiCraft144973</span></p>
+        </div>
+        <p style="margin-top: 15px;">Im Anhang sind ein paar Fotos aus Discord.</p>
+    </footer>
+
+</body>
+</html>
+
