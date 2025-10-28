@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWE | Shadow Empire</title>
+    <!-- Einbindung der Poppins-Schriftart für modernes Design -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Einbindung von Font Awesome für Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* --- 1. Globale Stile & Farbschema --- */
+        :root {
+            --color-dark: #0A0A0A;
+            --color-text-light: #E0E0E0;
+            --color-fire: #FF4500; /* Hauptakzent Feuer-Rot (Permanentes Theme) */
+            --color-fire-glow: rgba(255, 69, 0, 0.8);
+            --color-opsucht-blue: #00BFFF; /* Nur für Opsucht-Text-Highlight beibehalten */
+            --color-glass-bg: rgba(20, 20, 20, 0.6);
+            --color-glass-bg-scrolled: rgba(10, 10, 10, 0.9); /* Dunklerer Hintergrund für gescrollten Header */
+            --color-glass-border: rgba(255, 255, 255, 0.1);
+            --color-card-bg: rgba(30, 30, 30, 0.7);
+            --transition-curve: cubic-bezier(0.25, 0.8, 0.25, 1);
+            --transition-speed-fast: 0.3s; 
+            --transition-speed: 0.5s;
+        }
+
+        body {
+            background-color: var(--color-dark);
+            color: var(--color-text-light);
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            cursor: none; /* Versteckt den Standard-Cursor */
+        }
+
+        /* --- Custom Cursor --- */
+        #cursor-trail {
+            position: fixed;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: var(--color-fire);
+            box-shadow: 0 0 15px var(--color-fire-glow), 0 0 5px rgba(255, 255, 255, 0.5);
+            pointer-events: none; 
+            transition: all 0.1s linear; /* Schnelle Transition für Geschwindigkeitsanpassung */
+            transform: translate(-50%, -50%); 
+            z-index: 9999;
+            opacity: 0.8;
+            mix-blend-mode: screen; 
+        }
+        
+        body.hover-interactive #cursor-trail {
+            width: 40px;
+            height: 40px;
+            opacity: 1;
+        }
+
+        /* --- Scroll Progress Bar --- */
+        #scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            width: 0%;
+            background: var(--color-fire);
+            z-index: 9999;
+            box-shadow: 0 0 10px var(--color-fire-glow);
+        }
+
+        /* --- Liquid Glass Effekt (Basis) --- */
+        .glass-effect {
+            background: var(--color-glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--color-glass-border);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: all var(--transition-speed) var(--transition-curve);
+        }
+        
+        /* Allgemeine Akzentfarbe für das permanente Fire Mode Theme */
+        .logo, .content-section h2, .about-item i, .stat-item i, .highlight-contact {
+            color: var(--color-fire); 
+            text-shadow: 0 0 10px var(--color-fire-glow);
+            transition: all var(--transition-speed);
+        }
+        
+        /* Button Style */
+        .btn-glass {
+            padding: 8px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            background: rgba(255, 69, 0, 0.8);
+            color: white !important;
+            font-weight: 600;
+            border: 1px solid rgba(255, 69, 0, 0.3);
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.4);
+            transition: all 0.3s var(--transition-curve);
+            cursor: pointer; 
+            position: relative; 
+            overflow: hidden; 
+        }
+
+        .btn-glass:hover {
+            background: var(--color-fire);
+            box-shadow: 0 6px 20px rgba(255, 69, 0, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* --- Ripple Effekt --- */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple-animation 0.6s linear;
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+        @keyframes ripple-animation {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+        
+        /* --- 2. Hintergrund Animation --- */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 10% 20%, rgba(255, 69, 0, 0.08) 0%, transparent 30%),
+                radial-gradient(circle at 90% 80%, rgba(0, 191, 255, 0.05) 0%, transparent 30%),
+                linear-gradient(135deg, rgba(10, 10, 10, 1) 0%, rgba(30, 0, 0, 1) 100%);
+            z-index: -1;
+            animation: backgroundPulse 60s infinite alternate ease-in-out;
+            will-change: transform, opacity;
+            transition: all 1s var(--transition-curve);
+        }
+        
+        @keyframes backgroundPulse {
+            0% { transform: scale(1); opacity: 0.95; }
+            50% { transform: scale(1.01); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.95; }
+        }
+
+        /* --- 3. Header & Navigation --- */
+        header {
+            position: fixed;
+            width: calc(100% - 40px);
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            border-radius: 20px;
+            transition: all 0.4s var(--transition-curve); 
+            will-change: transform, background, padding;
+        }
+
+        /* Geschrumpfter Header beim Scrollen */
+        header.scrolled-header {
+            padding: 10px 30px;
+            background: var(--color-glass-bg-scrolled);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.6);
+        }
+
+        .logo {
+            font-size: 1.8em;
+            font-weight: 700;
+            letter-spacing: 1px;
+            white-space: nowrap; 
+            transition: font-size 0.4s var(--transition-curve); 
+        }
+        
+        header.scrolled-header .logo {
+            font-size: 1.5em;
+        }
+
+        .empire-text {
+            color: #FFFFFF;
+            text-shadow: 0 0 5px var(--color-fire-glow);
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        nav a {
+            color: var(--color-text-light);
+            text-decoration: none;
+            font-weight: 400;
+            transition: color 0.4s var(--transition-curve), text-shadow 0.4s var(--transition-curve);
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        nav a:hover {
+            color: var(--color-fire);
+            text-shadow: 0 0 8px var(--color-fire-glow);
+        }
+
+        /* --- 4. Hero-Sektion mit 3D-Kipp-Effekt --- */
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(to bottom, #000000 0%, #1A0500 100%); 
+            position: relative;
+            padding: 0 20px;
+            overflow: hidden; 
+            perspective: 1000px; 
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            padding-top: 100px;
+            will-change: transform;
+            transition: transform 0.2s ease-out; 
+        }
+
+        h1#hero-title {
+            font-size: 4em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: white; 
+            /* Flacker-Glitch-Effekt */
+            text-shadow: 
+                0 0 7px var(--color-fire-glow), 
+                0 0 15px var(--color-fire-glow),
+                0 0 25px var(--color-fire-glow);
+            animation: fireFlicker 2s infinite alternate step-end; 
+            transition: color 0.5s, text-shadow 0.5s;
+        }
+
+        /* Flacker-Glitch Keyframes für H1 */
+        @keyframes fireFlicker {
+            0%, 19.5%, 21.5%, 23.5%, 25%, 54%, 56%, 100% {
+                text-shadow: 
+                    0 0 7px var(--color-fire-glow), 
+                    0 0 15px var(--color-fire-glow),
+                    0 0 25px var(--color-fire-glow);
+            }
+            20%, 22%, 24%, 55% {
+                text-shadow: 
+                    0 0 2px var(--color-fire), 
+                    0 0 5px var(--color-fire), 
+                    0 0 10px rgba(255, 69, 0, 0.5);
+                transform: translateX(1px);
+            }
+        }
+
+        /* Fragmentierung-Effekt (für Klick) */
+        h1#hero-title.fragmenting {
+            text-shadow: 0 0 3px #fff, 0 0 5px var(--color-opsucht-blue);
+            transform: translate(5px, -5px) skewX(2deg);
+        }
+        
+        /* --- 5. Content Sektionen --- */
+        .content-section {
+            margin: 50px auto; 
+            padding: 40px;
+            max-width: 1200px; 
+            width: calc(100% - 40px);
+            box-sizing: border-box;
+        }
+        
+        /* Layout Grid */
+        .about-grid, .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        /* --- Glitch Keyframes --- */
+        @keyframes subtleGlitch {
+            0% { transform: translate(0, 0); }
+            50% { transform: translate(-1px, 1px); }
+            100% { transform: translate(1px, -1px); }
+        }
+
+        .about-item {
+            background: var(--color-card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid rgba(255, 69, 0, 0.2); 
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+            transition: transform 0.5s var(--transition-curve), box-shadow 0.5s var(--transition-curve);
+            will-change: transform, box-shadow;
+            cursor: default;
+            position: relative; 
+        }
+        
+        /* Glitch Aktivierung */
+        .about-item:hover {
+            transform: translateY(-10px) scale(1.01);
+            box-shadow: 0 20px 50px rgba(255, 69, 0, 0.4);
+            animation: subtleGlitch 0.2s infinite alternate;
+        }
+
+        /* Statistik-Titel Style (ersetzt die Counter-Zahlen) */
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: var(--color-card-bg);
+            border-radius: 15px;
+            border: 1px solid var(--color-fire-glow);
+            box-shadow: 0 5px 20px rgba(255, 69, 0, 0.1);
+        }
+        
+        .stat-item h3 {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin: 0;
+            color: var(--color-text-light);
+            text-shadow: none;
+        }
+
+        .stat-item i {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        /* Discord Kopier-Box Style */
+        .copy-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 30px;
+            margin-top: 20px;
+            background: rgba(255, 69, 0, 0.2);
+            border: 2px solid var(--color-fire);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s var(--transition-curve);
+            font-weight: 600;
+            color: var(--color-text-light);
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            /* Stärkere visuelle Hervorhebung beim Initial-Look und Hover */
+            box-shadow: 
+                0 0 10px rgba(255, 69, 0, 0.5), /* Fire Glow */
+                0 0 20px rgba(255, 69, 0, 0.2); 
+        }
+
+        .copy-box:hover {
+            background: rgba(255, 69, 0, 0.3);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 
+                0 0 15px var(--color-fire-glow), 
+                0 0 30px rgba(255, 69, 0, 0.4); 
+        }
+
+        .copy-box i {
+            font-size: 1.2em;
+            color: var(--color-fire);
+            text-shadow: 0 0 5px var(--color-fire-glow);
+        }
+
+        /* Pop-up Nachricht */
+        #copy-message {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background-color: var(--color-fire);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            z-index: 1001;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.6);
+        }
+
+        #copy-message.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* --- 6. Footer --- */
+        footer {
+            margin-top: 80px;
+            padding: 30px 40px;
+            text-align: center;
+            border-radius: 20px 20px 0 0;
+            border-bottom: none;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.2);
+            font-size: 0.9em;
+        }
+
+        .developer-info {
+            margin-top: 10px;
+            opacity: 0.6;
+        }
+        
+        .developer-info span {
+            color: var(--color-fire);
+            font-weight: 600;
+        }
+
+        /* --- 7. Responsive Design --- */
+        @media (max-width: 1024px) {
+            header {
+                width: calc(100% - 20px);
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                padding: 10px 15px;
+                border-radius: 15px;
+            }
+
+            .logo {
+                font-size: 1.5em;
+            }
+            
+            nav {
+                gap: 10px;
+            }
+
+            nav a {
+                font-size: 0.9em;
+                padding: 5px;
+            }
+            
+            h1#hero-title {
+                font-size: 2.5em;
+            }
+            
+            .content-section {
+                padding: 20px;
+                width: calc(100% - 20px);
+                margin: 30px auto;
+            }
+            
+            .about-grid, .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .copy-box {
+                display: flex;
+                flex-direction: column;
+                padding: 15px;
+            }
+        }
+        
+        /* Allgemeine Klasse für Fade-In beim Scrollen (JS) */
+        .hidden-content {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s var(--transition-curve), transform 0.6s var(--transition-curve);
+        }
+
+        .visible-content {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+    </style>
+</head>
+<body>
+    <!-- Scroll Progress Bar -->
+    <div id="scroll-progress"></div>
+
+    <!-- Custom Cursor Element -->
+    <div id="cursor-trail"></div>
+
+    <!-- Hintergrund Animation für den Liquid-Touch -->
+    <div class="background-animation" id="background-anim"></div> 
+
+    <!-- Header im Liquid Glass Stil -->
+    <header class="glass-effect" id="main-header">
+        <div class="logo" id="logo-text">SWE <span class="empire-text">SHADOW EMPIRE</span></div>
+        <nav>
+            <a href="#home">Home</a>
+            <a href="#about">Über uns</a>
+            <a href="#success">Triumphe</a> <!-- Navigation wieder drin -->
+            <a href="#join" class="btn-glass">Beitreten</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Hero Sektion -->
+        <section id="home" class="hero-section">
+            <div id="hero-content" class="hero-content">
+                <h1 id="hero-title">DAS SHADOW EMPIRE HERRSCHT</h1>
+                <p>Wir sind ein aktiver Clan auf dem <span class="opsucht-blue">OPSucht</span> CityBuild-Server, bekannt für unsere Präsenz und unseren Clan Plot.</p>
+                <a href="#join" class="btn-glass">Dein Platz im Imperium</a>
+            </div>
+        </section>
+
+        <!-- Über uns Sektion (Ziele) im Liquid Glass Stil -->
+        <section id="about" class="content-section glass-effect hidden-content">
+            <h2>WER WIR SIND</h2>
+            <div class="about-grid">
+                <!-- Glitch-Effekt auf about-item beim Hover -->
+                <div class="about-item">
+                    <i class="fas fa-hammer"></i>
+                    <h3>Clan Plot</h3>
+                    <p>Unser Ziel ist es, den Clan Plot (Clan Bauplatz) zu einem der beeindruckendsten Bauwerke auf <span class="opsucht-blue">OPSucht</span> zu machen.</p>
+                </div>
+                <div class="about-item">
+                    <i class="fas fa-handshake"></i>
+                    <h3>Einheit</h3>
+                    <p>Zusammenhalt ist unsere Stärke. Jedes Shadow-Mitglied zählt und unterstützt das Team.</p>
+                </div>
+                <div class="about-item">
+                    <i class="fas fa-fire"></i>
+                    <h3>Aktivität</h3>
+                    <p>Wir legen Wert auf eine aktive und leidenschaftliche Teilnahme unserer Mitglieder im Spiel und in der Community.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Erfolge Sektion im Liquid Glass Stil (OHNE ZAHLEN) -->
+        <section id="success" class="content-section glass-effect hidden-content">
+            <h2>UNSERE TRIUMPHE</h2>
+            <div class="stats-grid">
+                <!-- Stat 1: Mitglieder (Text statt Zahl) -->
+                <div class="stat-item">
+                    <i class="fas fa-users"></i>
+                    <h3>Aktive Mitglieder</h3>
+                    <p>Wir wachsen stetig und suchen engagierte Schatten für unser Team.</p>
+                </div>
+                <!-- Stat 2: Clanlevel (Text statt Zahl) -->
+                <div class="stat-item">
+                    <i class="fas fa-crown"></i>
+                    <h3>Clan-Level</h3>
+                    <p>Wir arbeiten zusammen daran, unseren Clan-Level konstant zu steigern und an der Spitze zu stehen.</p>
+                </div>
+                <!-- Stat 3: Discord Mitglieder (Text statt Zahl) -->
+                <div class="stat-item">
+                    <i class="fab fa-discord"></i>
+                    <h3>Discord Community</h3>
+                    <p>Unsere Discord-Community ist das Herzstück unserer Organisation – aktiv und immer bereit für Action.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Beitritt Sektion im Liquid Glass Stil -->
+        <section id="join" class="content-section glass-effect join-section hidden-content">
+            <h2>WERDE EIN SCHATTEN?</h2> 
+            <p>Wenn du ein Teil des Shadow Empire werden möchtest, kontaktiere uns und starte deine Reise!</p>
+            
+            <!-- KORRIGIERT: Keine Backslashes, keine fetten Sternchen -->
+            <p class="join-instructions">Schreibe **picto_19** auf Discord für eine Bewerbung.</p>
+            
+            <!-- Klickbarer Kasten zum Kopieren -->
+            <div id="copy-discord" class="copy-box" role="button" aria-label="Discord ID kopieren">
+                <i class="fab fa-discord"></i> Klicke, um **picto_19** zu kopieren!
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Pop-up Nachricht für die Kopierfunktion -->
+    <div id="copy-message">Discord ID kopiert!</div>
+
+    <!-- Footer im Liquid Glass Stil -->
+    <footer class="glass-effect hidden-content">
+        <p>&copy; 2025 Shadow Empire. Eine aktive Gemeinschaft auf <span class="opsucht-blue">OPSucht</span>.</p>
+        <div class="developer-info">
+            <p>Owner: <span>Picto_19</span></p>
+            <p>Developer dieser Website: <span>.EntiCraft144973</span></p>
+        </div>
+    </footer>
+
+    <script>
+        // --- SEHR COOLE FUNKTIONEN & SEHR GUTE ANIMATIONEN (JavaScript) ---
+
+        // Funktion zur Überprüfung, ob das Gerät als mobil gilt
+        const isMobile = () => window.innerWidth <= 1024;
+        
+        // DOM Elemente
+        const mainHeader = document.getElementById('main-header');
+        const heroContent = document.getElementById('hero-content');
+        const heroSection = document.getElementById('home');
+        const cursorTrail = document.getElementById('cursor-trail');
+        const scrollProgress = document.getElementById('scroll-progress');
+        const btnGlassElements = document.querySelectorAll('.btn-glass');
+        const interactiveElements = 'a, button, .btn-glass, .copy-box, h1, .about-item';
+
+        // 1. Element Einblenden beim Scrollen (Reveal Animation)
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible-content');
+                    // Der Counter-Code ist nicht mehr nötig
+                    observer.unobserve(entry.target); 
+                }
+            });
+        }, { threshold: isMobile() ? 0.05 : 0.3 }); 
+
+        document.querySelectorAll('.hidden-content').forEach(element => {
+            observer.observe(element);
+        });
+
+        // 2. Parallax Scroll Effekt & Hero 3D-Kipp-Effekt 
+        let mouseX = 0;
+        let mouseY = 0;
+        let currentScrollY = window.scrollY;
+
+        const applyTransform = () => {
+            const transform = `translateY(${currentScrollY * 0.2}px) rotateX(${mouseX}deg) rotateY(${mouseY}deg)`;
+            heroContent.style.transform = transform;
+        };
+
+        // 3. Header Scroll Transformation 
+        const updateHeaderAndScrollProgress = () => {
+            currentScrollY = window.scrollY;
+            
+            // Header Transformation
+            if (currentScrollY > 50) {
+                mainHeader.classList.add('scrolled-header');
+            } else {
+                mainHeader.classList.remove('scrolled-header');
+            }
+            
+            // Scroll Progress Bar
+            const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrollPercent = (currentScrollY / docHeight) * 100;
+            scrollProgress.style.width = `${scrollPercent}%`;
+
+            applyTransform();
+        };
+
+        window.addEventListener('scroll', updateHeaderAndScrollProgress);
+
+        // 3D Kipp-Effekt basierend auf Mausposition (NUR AUF DESKTOP)
+        heroSection.addEventListener('mousemove', (e) => {
+            if (isMobile()) return; 
+
+            const rect = heroSection.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+
+            const offsetX = e.clientX - rect.left - centerX;
+            const offsetY = e.clientY - rect.top - centerY;
+
+            const rotateY = (offsetX / centerX) * -1 * 5; 
+            const rotateX = (offsetY / centerY) * 1 * 5; 
+
+            mouseX = rotateX;
+            mouseY = rotateY;
+            
+            applyTransform();
+        });
+        
+        heroSection.addEventListener('mouseleave', () => {
+            if (isMobile()) return;
+            mouseX = 0;
+            mouseY = 0;
+            applyTransform();
+        });
+
+
+        // 4. Discord Kopierfunktion
+        const copyButton = document.getElementById('copy-discord');
+        const copyMessage = document.getElementById('copy-message');
+
+        copyButton.addEventListener('click', () => {
+            // Extrahieren der ID aus dem innerHTML (picto_19 ist in der **bold** Formatierung)
+            // KORRIGIERT: Die ID wird jetzt sauber als 'picto_19' extrahiert
+            const discordIdText = copyButton.textContent;
+            const discordIdMatch = discordIdText.match(/\*\*([^\*]+)\*\*/); 
+            const discordId = discordIdMatch ? discordIdMatch[1] : 'picto_19'; // Fallback
+            
+            const tempInput = document.createElement('textarea');
+            tempInput.value = discordId;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            
+            try {
+                // Verwenden Sie execCommand('copy') für bessere Kompatibilität in iFrames
+                document.execCommand('copy');
+                
+                // Pop-up Nachricht anzeigen
+                copyMessage.classList.add('show');
+                setTimeout(() => {
+                    copyMessage.classList.remove('show');
+                }, 1500);
+
+            } catch (err) {
+                console.error('Kopieren fehlgeschlagen:', err);
+            } finally {
+                document.body.removeChild(tempInput);
+            }
+        });
+        
+        // 5. Hero-Text-Fragmentierung bei Klick 
+        const heroTitle = document.getElementById('hero-title');
+        
+        heroTitle.addEventListener('click', () => {
+            if (heroTitle.classList.contains('fragmenting')) return; 
+
+            heroTitle.classList.add('fragmenting');
+            
+            setTimeout(() => {
+                heroTitle.classList.remove('fragmenting');
+            }, 500);
+        });
+
+
+        // 6. Fire Ripple Effect on Buttons 
+        btnGlassElements.forEach(button => {
+            button.addEventListener('click', function (e) {
+                const rect = button.getBoundingClientRect();
+                // Position des Klicks relativ zum Button
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const ripple = document.createElement('span');
+                ripple.classList.add('ripple');
+                
+                // Setze Größe als Maximum von Breite und Höhe des Buttons
+                const size = Math.max(rect.width, rect.height);
+                
+                ripple.style.width = ripple.style.height = `${size}px`;
+                // Zentriere den Ripple am Klickpunkt
+                ripple.style.left = `${x - size / 2}px`;
+                ripple.style.top = `${y - size / 2}px`;
+
+                this.appendChild(ripple);
+
+                // Entferne das Ripple-Element nach der Animation
+                ripple.addEventListener('animationend', () => {
+                    ripple.remove();
+                });
+            });
+        });
+
+
+        // 7. Dynamic Fire Cursor Size based on Speed 
+        let lastX = 0;
+        let lastY = 0;
+
+        if (!isMobile()) {
+            document.addEventListener('mousemove', (e) => {
+                // Den Cursor-Trail sanft zur aktuellen Position bewegen
+                cursorTrail.style.left = `${e.clientX}px`;
+                cursorTrail.style.top = `${e.clientY}px`;
+
+                // Geschwindigkeitsbasierte Größenanpassung
+                const speedX = Math.abs(e.clientX - lastX);
+                const speedY = Math.abs(e.clientY - lastY);
+                const speed = Math.sqrt(speedX * speedX + speedY * speedY); 
+                
+                // Skaliere die Geschwindigkeit auf einen Größenbereich (z.B. 25px bis 50px)
+                const minSize = 25;
+                const maxSize = 50;
+                const maxSpeed = 30; // Schwellenwert für maximale Größe
+                
+                // Lineare Interpolation (clamp)
+                let newSize = minSize + (maxSize - minSize) * Math.min(speed / maxSpeed, 1);
+                
+                // Übergib die Größe an CSS, außer wenn über einem interaktiven Element
+                const isHovering = e.target.closest(interactiveElements);
+                if (isHovering) {
+                    document.body.classList.add('hover-interactive');
+                } else {
+                    document.body.classList.remove('hover-interactive');
+                    cursorTrail.style.width = `${newSize}px`;
+                    cursorTrail.style.height = `${newSize}px`;
+                    cursorTrail.style.opacity = `${0.8 + (newSize - minSize) / (maxSize - minSize) * 0.2}`; 
+                }
+                
+                lastX = e.clientX;
+                lastY = e.clientY;
+            });
+        }
+        
+        // Beim Laden Parallax-Initialisierung
+        document.addEventListener('DOMContentLoaded', () => {
+            applyTransform();
+        });
+
+    </script>
+
+</body>
+</html>
