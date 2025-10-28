@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWE | Shadow Empire</title>
+    <!-- Einbindung der Poppins-Schriftart für modernes Design -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Einbindung der Retro-Schriftart für das Spiel -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- Einbindung von Font Awesome für Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* --- 1. Globale Stile & Farbschema --- */
+        :root {
+            --color-dark: #0A0A0A;
+            --color-text-light: #E0E0E0;
+            --color-fire: #FF4500; /* Hauptakzent Feuer-Rot (Permanentes Theme) */
+            --color-fire-glow: rgba(255, 69, 0, 0.8);
+            --color-opsucht-blue: #00BFFF; /* Nur für Opsucht-Text-Highlight beibehalten */
+            --color-glass-bg: rgba(20, 20, 20, 0.6);
+            --color-glass-bg-scrolled: rgba(10, 10, 10, 0.95); 
+            --color-glass-border: rgba(255, 255, 255, 0.1);
+            --color-card-bg: rgba(30, 30, 30, 0.7);
+            --transition-curve: cubic-bezier(0.25, 0.8, 0.25, 1);
+            --transition-speed: 0.5s;
+            /* Variablen für die Header-Höhe */
+            --header-height-initial: 90px;
+            --header-height-scrolled: 70px;
+        }
+
+        body {
+            background-color: var(--color-dark);
+            color: var(--color-text-light);
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            cursor: none; /* WICHTIG: Standard-Cursor ausblenden */
+        }
+        
+        /* Zustand für offenes mobiles Menü */
+        body.menu-open {
+            overflow: hidden;
+        }
+
+        /* --- Custom Cursor --- */
+        #cursor-trail {
+            position: fixed;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: var(--color-fire);
+            box-shadow: 0 0 15px var(--color-fire-glow), 0 0 5px rgba(255, 255, 255, 0.5);
+            pointer-events: none; /* WICHTIG: Klicks durchlassen */
+            transition: all 0.1s linear; 
+            transform: translate(-50%, -50%); 
+            z-index: 9999;
+            opacity: 0.8;
+            mix-blend-mode: screen; /* Cooler Überblendungs-Effekt */
+            display: none; /* Standardmäßig ausgeblendet, bis JS es aktiviert (außer auf Mobil) */
+        }
+        
+        body.hover-interactive #cursor-trail {
+            width: 40px;
+            height: 40px;
+            opacity: 1;
+        }
+
+        /* --- Scroll Progress Bar --- */
+        #scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            width: 0%;
+            background: var(--color-fire);
+            z-index: 9999;
+            box-shadow: 0 0 10px var(--color-fire-glow);
+        }
+
+        /* --- Liquid Glass Effekt (Basis) --- */
+        .glass-effect {
+            background: var(--color-glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--color-glass-border);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: all var(--transition-speed) var(--transition-curve);
+        }
+        
+        /* Allgemeine Akzentfarbe */
+        .logo, .content-section h2, .about-item i, .stat-item i, .highlight-contact {
+            color: var(--color-fire); 
+            text-shadow: 0 0 10px var(--color-fire-glow);
+            transition: all 0.4s;
+        }
+        
+        /* Button Style */
+        .btn-glass {
+            padding: 10px 25px;
+            text-decoration: none;
+            border-radius: 8px;
+            background: rgba(255, 69, 0, 0.8);
+            color: white !important;
+            font-weight: 600;
+            border: 1px solid rgba(255, 69, 0, 0.3);
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.4);
+            transition: all 0.3s var(--transition-curve);
+            cursor: pointer; 
+            position: relative; 
+            overflow: hidden; 
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-align: center;
+        }
+
+        .btn-glass:hover {
+            background: var(--color-fire);
+            box-shadow: 0 6px 20px rgba(255, 69, 0, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* --- Ripple Effekt (Wird in JS ausgelöst) --- */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple-animation 0.6s linear;
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+        @keyframes ripple-animation {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+        
+        /* --- 2. Hintergrund Animation --- */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 10% 20%, rgba(255, 69, 0, 0.08) 0%, transparent 30%),
+                radial-gradient(circle at 90% 80%, rgba(0, 191, 255, 0.05) 0%, transparent 30%),
+                linear-gradient(135deg, rgba(10, 10, 10, 1) 0%, rgba(30, 0, 0, 1) 100%);
+            z-index: -1;
+            animation: backgroundPulse 60s infinite alternate ease-in-out;
+            will-change: transform, opacity;
+            transition: all 1s var(--transition-curve);
+        }
+        
+        @keyframes backgroundPulse {
+            0% { transform: scale(1); opacity: 0.95; }
+            50% { transform: scale(1.01); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.95; }
+        }
+
+        /* --- 3. Header & Navigation (Fixiert) --- */
+        header {
+            position: fixed;
+            width: 100%; 
+            top: 0;
+            left: 0;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            background: transparent; 
+            backdrop-filter: none;
+            border-bottom: 1px solid transparent;
+            box-shadow: none;
+            transition: all 0.4s var(--transition-curve); 
+            height: var(--header-height-initial); 
+            box-sizing: border-box; 
+        }
+
+        header.scrolled-header {
+            padding: 10px 40px;
+            background: var(--color-glass-bg-scrolled);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--color-glass-border);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.6);
+            height: var(--header-height-scrolled); 
+        }
+
+        .logo {
+            font-size: 1.8em;
+            font-weight: 700;
+            letter-spacing: 1px;
+            white-space: nowrap; 
+            transition: all 0.4s var(--transition-curve); 
+        }
+        
+        header.scrolled-header .logo {
+            font-size: 1.5em;
+        }
+
+        .empire-text {
+            color: #FFFFFF;
+            text-shadow: 0 0 5px var(--color-fire-glow);
+        }
+
+        /* Desktop Navigation */
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: transform 0.4s var(--transition-curve); 
+        }
+
+        nav a {
+            color: var(--color-text-light);
+            text-decoration: none;
+            font-weight: 400;
+            transition: color 0.4s var(--transition-curve), text-shadow 0.4s var(--transition-curve);
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        nav a:hover {
+            color: var(--color-fire);
+            text-shadow: 0 0 8px var(--color-fire-glow);
+        }
+        
+        /* Menü Toggle Button (nur auf Mobile sichtbar) */
+        #menu-toggle {
+            display: none; 
+            background: none;
+            border: none;
+            color: var(--color-fire);
+            font-size: 1.5em;
+            padding: 5px 10px;
+            z-index: 1001; 
+            cursor: pointer;
+        }
+        
+        #menu-toggle i {
+            transition: transform 0.3s;
+        }
+        
+        /* X-Icon Styling bei geöffnetem Menü */
+        body.menu-open #menu-toggle i {
+            transform: rotate(90deg);
+        }
+
+
+        /* --- 4. Content Sektionen Layout (FIX: verhindert Überlappung) --- */
+        main {
+            /* Füllt den Platz des fixierten Headers aus */
+            padding-top: var(--header-height-initial); 
+            transition: padding-top 0.4s var(--transition-curve);
+        }
+        
+        /* Setze Hero Section auf volle Höhe - Header Höhe */
+        .hero-section {
+            padding-top: 0; 
+            min-height: calc(100vh - var(--header-height-initial)); 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        /* Hero Content für 3D Tilt Effekt */
+        .hero-content {
+            transition: transform 0.1s linear; /* Für flüssigen 3D-Tilt */
+        }
+        
+        .content-section {
+            width: 90%;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        .content-section h2 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        /* Element Reveal beim Scrollen */
+        .hidden-content {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1s var(--transition-curve), transform 1s var(--transition-curve);
+        }
+
+        .visible-content {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Layout Grid */
+        .about-grid, .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .about-item, .stat-item {
+            padding: 30px;
+            background: var(--color-card-bg);
+            border-radius: 15px;
+            border: 1px solid var(--color-fire-glow);
+            box-shadow: 0 5px 20px rgba(255, 69, 0, 0.1);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .about-item:hover, .stat-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 69, 0, 0.2);
+        }
+
+        .about-item i, .stat-item i {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        
+        /* Discord Copy Box */
+        #copy-discord {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 30px;
+            margin-top: 20px;
+            font-weight: 600;
+            font-size: 1.1em;
+            border: 2px solid var(--color-opsucht-blue);
+            background: rgba(0, 191, 255, 0.1);
+            color: var(--color-opsucht-blue);
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        
+        #copy-discord:hover {
+            background: rgba(0, 191, 255, 0.25);
+            box-shadow: 0 0 15px rgba(0, 191, 255, 0.6);
+        }
+        
+        /* Kopiernachricht */
+        #copy-message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(50px);
+            padding: 10px 20px;
+            background: var(--color-fire);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 2000;
+        }
+
+        #copy-message.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+
+        /* --- Footer und Game Button Container --- */
+        .game-container-wrapper {
+            text-align: center;
+            padding: 40px 0;
+            margin-bottom: 50px;
+        }
+        
+        footer {
+            padding: 20px 40px;
+            text-align: center;
+            border-radius: 0; 
+            border-top: 1px solid var(--color-glass-border);
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            margin-top: 50px;
+        }
+        
+        .developer-info {
+            margin-top: 10px;
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+        .developer-info span {
+            color: var(--color-fire);
+            font-weight: 600;
+        }
+
+
+        /* --- 5. Flappy Shadow Game Modal STYLES (Unverändert) --- */
+        #game-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            cursor: pointer; 
+        }
+
+        #game-modal.open {
+            display: flex;
+        }
+
+        .game-content {
+            background: #1a202c; 
+            padding: 20px;
+            border-radius: 20px;
+            border: 3px solid #8b5cf6; 
+            box-shadow: 0 0 40px rgba(139, 92, 246, 0.8);
+            text-align: center;
+            position: relative;
+            cursor: default;
+            width: 95%; 
+            max-width: 480px;
+            height: 95%;
+            max-height: 700px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        #game-canvas {
+            background-color: #0d1117; 
+            border: 2px solid #8b5cf6;
+            border-radius: 10px;
+            display: block;
+            margin: 0 auto;
+            touch-action: manipulation;
+            width: 100%;
+            flex-grow: 1; 
+            aspect-ratio: 9/16; 
+            min-height: 300px;
+            max-height: 600px;
+            position: relative; 
+            overflow: hidden;
+            font-family: 'Press Start 2P', cursive;
+        }
+        
+        #game-score, #game-highscore {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ffeb3b;
+            text-shadow: 2px 2px #000;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1rem;
+            z-index: 10;
+        }
+        
+        #game-highscore {
+            top: 35px;
+            font-size: 0.7rem;
+            color: #fff;
+            opacity: 0.8;
+        }
+
+        .game-controls {
+            padding: 10px 0 0;
+            color: var(--color-text-light);
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 5px; 
+        }
+
+        .game-controls button {
+            font-family: 'Poppins', sans-serif; /* Poppins für Buttons */
+            padding: 10px 20px; 
+            background-color: #6d28d9;
+            color: white;
+            border: 3px solid #8b5cf6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-shadow: 0 4px 0 #4c1d95;
+            margin-top: 10px;
+            width: 100%; 
+            max-width: 300px; 
+            align-self: center;
+        }
+        .game-controls button:hover {
+            background-color: #8b5cf6;
+        }
+        .game-controls button:active {
+            box-shadow: 0 0 0 #4c1d95;
+            transform: translateY(4px);
+        }
+
+        #close-game-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: var(--color-fire);
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        #close-game-btn:hover {
+            transform: scale(1.2);
+        }
+        
+        /* --- 6. Responsive Design (Mobile Menü & Header-Fix) --- */
+        @media (max-width: 1024px) {
+            :root {
+                 /* Reduziere das Padding auf Mobile */
+                --header-height-initial: 70px;
+                --header-height-scrolled: 60px;
+            }
+
+            header { 
+                padding: 10px 20px; 
+            }
+            
+            /* Zeige den Menü-Toggle Button */
+            #menu-toggle {
+                display: block; 
+            }
+            
+            /* Desktop-Navigation verstecken und als Mobile Overlay stylen */
+            nav {
+                position: fixed;
+                top: 0;
+                right: 0;
+                height: 100%;
+                width: 70%; 
+                max-width: 300px;
+                flex-direction: column;
+                justify-content: center;
+                gap: 30px;
+                
+                background: var(--color-glass-bg-scrolled);
+                backdrop-filter: blur(25px);
+                border-left: 1px solid var(--color-glass-border);
+                box-shadow: -5px 0 20px rgba(0, 0, 0, 0.8);
+                
+                transform: translateX(100%); 
+                z-index: 1000; 
+            }
+            
+            body.menu-open nav {
+                transform: translateX(0); 
+            }
+
+            nav a {
+                font-size: 1.2em;
+                padding: 10px 0;
+            }
+            
+            /* Der Beitreten-Button im Menü muss volle Breite haben */
+            nav a.btn-glass {
+                width: 80%;
+                margin: 0 auto;
+            }
+
+            /* Anpassung der Sektionen auf Mobile */
+            .content-section { 
+                padding: 20px; 
+                margin: 20px auto; 
+                width: 95%;
+            }
+
+            .about-item i, .stat-item i {
+                font-size: 2.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Scroll Progress Bar -->
+    <div id="scroll-progress"></div>
+
+    <!-- Custom Cursor Element -->
+    <div id="cursor-trail"></div>
+
+    <!-- Hintergrund Animation für den Liquid-Touch -->
+    <div class="background-animation" id="background-anim"></div> 
+
+    <!-- Header im Liquid Glass Stil -->
+    <header id="main-header">
+        <div class="logo" id="logo-text">SWE <span class="empire-text">SHADOW EMPIRE</span></div>
+        
+        <!-- NEU: Hamburger Menü Toggle -->
+        <button id="menu-toggle" aria-label="Menü öffnen/schließen">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <nav id="main-nav">
+            <a href="#home" class="nav-link">Home</a>
+            <a href="#about" class="nav-link">Über uns</a>
+            <a href="#success" class="nav-link">Triumphe</a>
+            <a href="#join" class="btn-glass">Beitreten</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Hero Sektion -->
+        <section id="home" class="hero-section">
+            <div id="hero-content" class="hero-content">
+                <h1 id="hero-title">DAS SHADOW EMPIRE HERRSCHT</h1>
+                <p>Wir sind ein aktiver Clan auf dem <span class="opsucht-blue">OPSucht</span> CityBuild-Server, bekannt für unsere Präsenz und unseren Clan Plot.</p>
+                <a href="#join" class="btn-glass">Dein Platz im Imperium</a>
+            </div>
+        </section>
+
+        <!-- Über uns Sektion -->
+        <section id="about" class="content-section glass-effect hidden-content">
+            <h2>WER WIR SIND</h2>
+            <div class="about-grid">
+                <div class="about-item">
+                    <i class="fas fa-hammer"></i>
+                    <h3>Clan Plot</h3>
+                    <p>Unser Ziel ist es, den Clan Plot (Clan Bauplatz) zu einem der beeindruckendsten Bauwerke auf <span class="opsucht-blue">OPSucht</span> zu machen.</p>
+                </div>
+                <div class="about-item">
+                    <i class="fas fa-handshake"></i>
+                    <h3>Einheit</h3>
+                    <p>Zusammenhalt ist unsere Stärke. Jedes Shadow-Mitglied zählt und unterstützt das Team.</p>
+                </div>
+                <div class="about-item">
+                    <i class="fas fa-fire"></i>
+                    <h3>Aktivität</h3>
+                    <p>Wir legen Wert auf eine aktive und leidenschaftliche Teilnahme unserer Mitglieder im Spiel und in der Community.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Erfolge Sektion -->
+        <section id="success" class="content-section glass-effect hidden-content">
+            <h2>UNSERE TRIUMPHE</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <i class="fas fa-users"></i>
+                    <h3>Aktive Mitglieder</h3>
+                    <p>Wir wachsen stetig und suchen engagierte Schatten für unser Team.</p>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-crown"></i>
+                    <h3>Clan-Level</h3>
+                    <p>Wir arbeiten zusammen daran, unseren Clan-Level konstant zu steigern und an der Spitze zu stehen.</p>
+                </div>
+                <div class="stat-item">
+                    <i class="fab fa-discord"></i>
+                    <h3>Discord Community</h3>
+                    <p>Unsere Discord-Community ist das Herzstück unserer Organisation – aktiv und immer bereit für Action.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Beitritt Sektion -->
+        <section id="join" class="content-section glass-effect join-section hidden-content">
+            <h2>WERDE EIN SCHATTEN?</h2> 
+            <p>Wenn du ein Teil des Shadow Empire werden möchtest, kontaktiere uns und starte deine Reise!</p>
+            
+            <p class="join-instructions">Schreibe **picto_19** auf Discord für eine Bewerbung.</p>
+            
+            <div id="copy-discord" class="copy-box" role="button" aria-label="Discord ID kopieren">
+                <i class="fab fa-discord"></i> Klicke, um **picto_19** zu kopieren!
+            </div>
+        </section>
+    </main>
+    
+    <!-- Game Button Sektion -->
+    <div class="game-container-wrapper hidden-content">
+        <button id="open-game-btn" class="btn-glass">
+            <i class="fas fa-gamepad"></i> Flappy Shadow Spielen
+        </button>
+    </div>
+
+    <!-- Pop-up Nachricht für die Kopierfunktion -->
+    <div id="copy-message">Discord ID kopiert!</div>
+
+    <!-- Flappy Shadow Game Modal -->
+    <div id="game-modal">
+        <div class="game-content">
+            <button id="close-game-btn"><i class="fas fa-times"></i></button>
+            
+            <div id="game-canvas">
+                <div id="game-score" style="position: absolute; top: 10px; width: 100%; text-align: center; color: #ffeb3b; font-family: 'Press Start 2P', cursive; font-size: 1rem; z-index: 10;">PUNKTE: 0</div>
+                <div id="game-highscore" style="position: absolute; top: 35px; width: 100%; text-align: center; color: #fff; opacity: 0.8; font-family: 'Press Start 2P', cursive; font-size: 0.7rem; z-index: 10;">BESTER: 0</div>
+            </div>
+
+            <div class="game-controls">
+                <p id="game-info" style="font-family: 'Press Start 2P', cursive; font-size: 0.8rem; margin-bottom: 10px;">Klicke, um zu starten!</p>
+                <button id="game-action-button" class="shadow-button" style="display: none;">
+                     SPIEL STARTEN
+                </button>
+                <button id="game-exit-button" class="shadow-button" style="display: none;">
+                    <i class="fas fa-sign-out-alt"></i> ZUM IMPERIUM
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer im Liquid Glass Stil -->
+    <footer class="glass-effect hidden-content">
+        <p>&copy; 2025 Shadow Empire. Eine aktive Gemeinschaft auf <span class="opsucht-blue">OPSucht</span>.</p>
+        <div class="developer-info">
+            <p>Owner: <span>Picto_19</span></p>
+            <p>Developer dieser Website: <span>.EntiCraft144973</span></p>
+        </div>
+    </footer>
+
+    <script>
+        // --- SEHR COOLE FUNKTIONEN & SEHR GUTE ANIMATIONEN (JavaScript) ---
+
+        // Funktion zur Überprüfung, ob das Gerät als mobil gilt (<= 1024px Breite)
+        const isMobile = () => window.innerWidth <= 1024;
+        
+        // DOM Elemente
+        const mainHeader = document.getElementById('main-header');
+        const heroContent = document.getElementById('hero-content');
+        const heroSection = document.getElementById('home');
+        const cursorTrail = document.getElementById('cursor-trail');
+        const scrollProgress = document.getElementById('scroll-progress');
+        const btnGlassElements = document.querySelectorAll('.btn-glass');
+        const interactiveElements = 'a, button, .btn-glass, .copy-box, h1, .about-item, .stat-item';
+        
+        // Mobile Menü Elemente
+        const menuToggle = document.getElementById('menu-toggle');
+        const navLinks = document.querySelectorAll('.nav-link, .btn-glass');
+
+
+        // 1. Element Einblenden beim Scrollen (Reveal Animation)
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible-content');
+                    observer.unobserve(entry.target); 
+                }
+            });
+        }, { threshold: isMobile() ? 0.05 : 0.3 }); 
+
+        document.querySelectorAll('.hidden-content').forEach(element => {
+            observer.observe(element);
+        });
+
+        // 2. Parallax Scroll Effekt & Hero 3D-Kipp-Effekt 
+        let mouseX = 0;
+        let mouseY = 0;
+        let currentScrollY = window.scrollY;
+
+        const applyTransform = () => {
+            // Hero Content bewegt sich sanft beim Scrollen nach unten
+            const scrollOffset = currentScrollY * 0.2;
+            // Wichtig: Der Parallax-Effekt wird mit dem 3D-Tilt kombiniert
+            const transform = `translateY(${scrollOffset}px) perspective(1000px) rotateX(${mouseX}deg) rotateY(${mouseY}deg)`;
+            heroContent.style.transform = transform;
+        };
+
+        // 3. Header Scroll Transformation 
+        const updateHeaderAndScrollProgress = () => {
+            currentScrollY = window.scrollY;
+            
+            // Header Transformation
+            if (currentScrollY > 5) {
+                mainHeader.classList.add('scrolled-header');
+            } else {
+                mainHeader.classList.remove('scrolled-header');
+            }
+            
+            // Scroll Progress Bar
+            const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrollPercent = (currentScrollY / docHeight) * 100;
+            scrollProgress.style.width = `${scrollPercent}%`;
+
+            applyTransform();
+        };
+
+        window.addEventListener('scroll', updateHeaderAndScrollProgress);
+        window.addEventListener('resize', updateHeaderAndScrollProgress);
+        document.addEventListener('DOMContentLoaded', updateHeaderAndScrollProgress);
+
+        // 3D Kipp-Effekt basierend auf Mausposition (NUR AUF DESKTOP)
+        heroSection.addEventListener('mousemove', (e) => {
+            // Deaktivieren bei Mobile, geöffnetem Spiel oder geöffnetem Menü
+            if (isMobile() || document.getElementById('game-modal').classList.contains('open') || document.body.classList.contains('menu-open')) return; 
+
+            const rect = heroSection.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+
+            const offsetX = e.clientX - rect.left - centerX;
+            const offsetY = e.clientY - rect.top - centerY;
+
+            // Kipp-Winkel sind auf maximal 5 Grad begrenzt
+            const rotateY = (offsetX / centerX) * -1 * 5; 
+            const rotateX = (offsetY / centerY) * 1 * 5; 
+
+            mouseX = rotateX;
+            mouseY = rotateY;
+            
+            applyTransform();
+        });
+        
+        heroSection.addEventListener('mouseleave', () => {
+            if (isMobile() || document.getElementById('game-modal').classList.contains('open') || document.body.classList.contains('menu-open')) return;
+            // Setze die Rotation sanft auf Null zurück
+            mouseX = 0;
+            mouseY = 0;
+            applyTransform();
+        });
+
+
+        // 4. Discord Kopierfunktion (Ist noch da!)
+        const copyButton = document.getElementById('copy-discord');
+        const copyMessage = document.getElementById('copy-message');
+
+        copyButton.addEventListener('click', () => {
+            const discordIdText = "picto_19";
+            
+            const tempInput = document.createElement('textarea');
+            tempInput.value = discordIdText;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            
+            try {
+                // document.execCommand('copy') ist die zuverlässigere Methode im iFrame.
+                document.execCommand('copy'); 
+                
+                copyMessage.classList.add('show');
+                setTimeout(() => {
+                    copyMessage.classList.remove('show');
+                }, 1500);
+
+            } catch (err) {
+                console.error('Kopieren fehlgeschlagen:', err);
+            } finally {
+                document.body.removeChild(tempInput);
+            }
+        });
+        
+        
+        // 5. Fire Ripple Effect on Buttons (Ist noch da!)
+        btnGlassElements.forEach(button => {
+            button.addEventListener('click', function (e) {
+                const rect = button.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const ripple = document.createElement('span');
+                ripple.classList.add('ripple');
+                
+                const size = Math.max(rect.width, rect.height);
+                
+                ripple.style.width = ripple.style.height = `${size}px`;
+                ripple.style.left = `${x - size / 2}px`;
+                ripple.style.top = `${y - size / 2}px`;
+
+                this.appendChild(ripple);
+
+                ripple.addEventListener('animationend', () => {
+                    ripple.remove();
+                });
+            });
+        });
+
+
+        // 6. Dynamic Fire Cursor Size (Ist noch da und sollte funktionieren!)
+        let lastX = 0;
+        let lastY = 0;
+
+        if (!isMobile()) {
+            document.addEventListener('mousemove', (e) => {
+                // Nur den Custom Cursor bewegen, wenn das Spiel oder Menü nicht offen ist
+                if (document.getElementById('game-modal').classList.contains('open') || document.body.classList.contains('menu-open')) return;
+
+                cursorTrail.style.left = `${e.clientX}px`;
+                cursorTrail.style.top = `${e.clientY}px`;
+
+                const speedX = Math.abs(e.clientX - lastX);
+                const speedY = Math.abs(e.clientY - lastY);
+                const speed = Math.sqrt(speedX * speedX + speedY * speedY); 
+                
+                const minSize = 25;
+                const maxSize = 50;
+                const maxSpeed = 30; 
+                
+                let newSize = minSize + (maxSize - minSize) * Math.min(speed / maxSpeed, 1);
+                
+                const isHovering = e.target.closest(interactiveElements);
+                if (isHovering) {
+                    document.body.classList.add('hover-interactive');
+                } else {
+                    document.body.classList.remove('hover-interactive');
+                    cursorTrail.style.width = `${newSize}px`;
+                    cursorTrail.style.height = `${newSize}px`;
+                    cursorTrail.style.opacity = `${0.8 + (newSize - minSize) / (maxSize - minSize) * 0.2}`; 
+                }
+                
+                lastX = e.clientX;
+                lastY = e.clientY;
+            });
+            cursorTrail.style.display = 'block'; 
+        } else {
+             // WICHTIGER HINWEIS: Wenn der Cursor ausgeblendet wird, dies in die Konsole schreiben
+             console.log("Custom Cursor auf Mobilgeräten (< 1024px Breite) deaktiviert.");
+             cursorTrail.style.display = 'none'; 
+        }
+        
+        // 7. Mobile Menü Toggle Logik
+        menuToggle.addEventListener('click', () => {
+            document.body.classList.toggle('menu-open');
+            // Menü Icon wechseln
+            const icon = menuToggle.querySelector('i');
+            if (document.body.classList.contains('menu-open')) {
+                icon.className = 'fas fa-times'; // X-Icon
+            } else {
+                icon.className = 'fas fa-bars'; // Hamburger Icon
+            }
+        });
+
+        // Schließe das Menü, wenn ein Link angeklickt wird (für Anchor-Tags)
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (isMobile() && document.body.classList.contains('menu-open')) {
+                    document.body.classList.remove('menu-open');
+                    menuToggle.querySelector('i').className = 'fas fa-bars';
+                }
+            });
+        });
+
+
+        // --- FLAPPY SHADOW GAME LOGIK (Unverändert) ---
+
+        const gameModal = document.getElementById('game-modal');
+        const openGameBtn = document.getElementById('open-game-btn');
+        const closeGameBtn = document.getElementById('close-game-btn');
+        const gameCanvasContainer = document.getElementById('game-canvas');
+        const gameScoreDisplay = document.getElementById('game-score');
+        const gameHighscoreDisplay = document.getElementById('game-highscore');
+        const gameInfo = document.getElementById('game-info');
+        const gameActionButton = document.getElementById('game-action-button');
+        const gameExitButton = document.getElementById('game-exit-button');
+        
+        let canvas, ctx;
+
+        const GRAVITY = 0.5;
+        const JUMP_VELOCITY = -9;
+        const PIPE_SPEED = 2;
+        const PIPE_WIDTH = 70; 
+        const PIPE_GAP = 160;
+        const GROUND_HEIGHT = 50;
+        const HIGH_SCORE_KEY = 'flappyShadowHighscore';
+
+        let gameLoopId;
+        let isGameRunning = false;
+        let player, pipes, score; 
+        let pipeGeneratorId;
+
+        const BIRD_RADIUS = 12;
+
+        // --- Highscore und Lokale Speicherung ---
+        function loadHighscore() {
+            const highscore = parseInt(localStorage.getItem(HIGH_SCORE_KEY) || 0, 10);
+            gameHighscoreDisplay.textContent = `BESTER: ${highscore}`;
+            return highscore;
+        }
+
+        function saveHighscore(newScore) {
+            const currentHighscore = loadHighscore();
+            if (newScore > currentHighscore) {
+                localStorage.setItem(HIGH_SCORE_KEY, newScore);
+                loadHighscore();
+            }
+        }
+
+        // --- Initialisierung und Setup ---
+        function initGame() {
+            player = {
+                x: 0, 
+                y: 0, 
+                velocity: 0,
+                radius: BIRD_RADIUS
+            };
+            pipes = []; 
+            score = 0;
+
+            if (!canvas) {
+                 canvas = document.createElement('canvas');
+                 canvas.width = gameCanvasContainer.clientWidth;
+                 canvas.height = gameCanvasContainer.clientHeight;
+                 ctx = canvas.getContext('2d');
+                 gameCanvasContainer.appendChild(canvas);
+
+                 canvas.addEventListener('click', playerJump);
+                 canvas.addEventListener('touchstart', (e) => {
+                     e.preventDefault(); 
+                     playerJump();
+                 });
+
+                 window.addEventListener('resize', resizeCanvas);
+            }
+            
+            resizeCanvas();
+
+            gameScoreDisplay.textContent = `PUNKTE: 0`;
+            loadHighscore();
+            gameInfo.textContent = 'KLICKEN ODER LEERTASTE DRÜCKEN';
+            gameActionButton.style.display = 'block';
+            gameActionButton.textContent = 'SPIEL STARTEN';
+            gameExitButton.style.display = 'block';
+
+            isGameRunning = false;
+        }
+        
+        function resizeCanvas() {
+            // Nur die Größe anpassen, wenn das Modal offen ist
+            if (!gameModal.classList.contains('open') || !canvas) return;
+            
+            canvas.width = gameCanvasContainer.clientWidth;
+            canvas.height = gameCanvasContainer.clientHeight;
+            
+            if (player) {
+                player.x = canvas.width / 4;
+                player.y = canvas.height / 2;
+            }
+            draw();
+        }
+
+        // --- Drawing ---
+        function draw() {
+            if (!ctx) return; // Sicherheits-Check
+            
+            // Hintergrund
+            ctx.fillStyle = '#1e3a8a'; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Boden
+            ctx.fillStyle = '#2d3748';
+            ctx.fillRect(0, canvas.height - GROUND_HEIGHT, canvas.width, GROUND_HEIGHT);
+            ctx.strokeStyle = '#4a5568';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height - GROUND_HEIGHT);
+            ctx.lineTo(canvas.width, canvas.height - GROUND_HEIGHT);
+            ctx.stroke();
+
+            // Rohre
+            pipes.forEach(pipe => drawPipe(pipe)); 
+            
+            // Spieler
+            drawPlayer();
+
+            // Overlay für Start/Game Over
+            if (!isGameRunning) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.font = '24px "Press Start 2P"';
+                ctx.fillStyle = '#ffeb3b';
+                ctx.textAlign = 'center';
+                ctx.fillText('FLAPPY SHADOW', canvas.width / 2, canvas.height / 2 - 60);
+
+                ctx.font = '16px "Press Start 2P"';
+                ctx.fillStyle = '#fff';
+                ctx.fillText(gameInfo.textContent, canvas.width / 2, canvas.height / 2);
+            }
+        }
+        
+        function drawPlayer() {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            
+            const rotationAngle = Math.min(Math.max(player.velocity * 0.05, -0.6), 1.5); 
+            ctx.rotate(rotationAngle);
+            
+            // Lila Kreis mit Schatten-Glow
+            ctx.beginPath();
+            ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
+            
+            const gradient = ctx.createRadialGradient(0, 0, player.radius / 2, 0, 0, player.radius);
+            gradient.addColorStop(0, '#8b5cf6');
+            gradient.addColorStop(1, '#4c1d95');
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Shadow Icon (Krähe/Fledermaus)
+            ctx.font = '16px FontAwesome'; 
+            ctx.fillStyle = '#000'; 
+            ctx.fillText('\uf005', -7, 6); // FontAwesome Star
+
+            ctx.restore();
+            
+            // Schatten-Glow
+            ctx.shadowColor = 'rgba(139, 92, 246, 0.9)';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.1)';
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        function drawPipe(pipe) {
+            ctx.fillStyle = '#1e4620';
+            ctx.strokeStyle = '#388E3C';
+            ctx.lineWidth = 4;
+            
+            // Oberes Rohr (Rechteck)
+            ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.topHeight);
+            ctx.strokeRect(pipe.x, 0, PIPE_WIDTH, pipe.topHeight);
+            
+            // Unteres Rohr (Rechteck)
+            ctx.fillRect(pipe.x, pipe.bottomY, PIPE_WIDTH, pipe.bottomHeight);
+            ctx.strokeRect(pipe.x, pipe.bottomY, PIPE_WIDTH, pipe.bottomHeight);
+            
+            // Rohrkopf oben
+            ctx.fillStyle = '#2e6030';
+            ctx.fillRect(pipe.x - 5, pipe.topHeight - 30, PIPE_WIDTH + 10, 30);
+            ctx.strokeRect(pipe.x - 5, pipe.topHeight - 30, PIPE_WIDTH + 10, 30);
+            
+            // Rohrkopf unten
+            ctx.fillStyle = '#2e6030';
+            ctx.fillRect(pipe.x - 5, pipe.bottomY, PIPE_WIDTH + 10, 30);
+            ctx.strokeRect(pipe.x - 5, pipe.bottomY, PIPE_WIDTH + 10, 30);
+        }
+
+        // --- Update und Game Loop ---
+        function startGame() {
+            if (isGameRunning) return;
+
+            isGameRunning = true;
+            gameActionButton.style.display = 'none';
+            gameExitButton.style.display = 'none';
+            gameInfo.textContent = 'SCHATTEN FLIEGT!';
+
+            pipeGeneratorId = setInterval(createPipe, 1500); 
+            
+            gameLoop();
+        }
+        
+        function gameOver() {
+            if (!isGameRunning) return;
+
+            isGameRunning = false;
+            cancelAnimationFrame(gameLoopId);
+            clearInterval(pipeGeneratorId);
+            
+            saveHighscore(score);
+            
+            gameInfo.textContent = `GAME OVER! Score: ${score}`;
+            gameActionButton.style.display = 'block';
+            gameActionButton.textContent = 'NEU STARTEN';
+            gameExitButton.style.display = 'block';
+            
+            draw(); 
+        }
+
+        function gameLoop() {
+            if (!isGameRunning) return;
+
+            updatePlayer();
+            updatePipes();
+            checkCollisions();
+            draw();
+
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        function updatePlayer() {
+            player.velocity += GRAVITY;
+            player.y += player.velocity;
+
+            if (player.velocity > 12) player.velocity = 12; 
+        }
+
+        function playerJump() {
+            if (!isGameRunning) {
+                if (gameActionButton.style.display !== 'none') {
+                    startGame();
+                }
+            } else {
+                player.velocity = JUMP_VELOCITY;
+            }
+        }
+
+        // --- Pipes ---
+        function createPipe() {
+            const minHeight = 60;
+            const maxHeight = canvas.height - GROUND_HEIGHT - PIPE_GAP - minHeight;
+            const topHeight = Math.random() * (maxHeight - minHeight) + minHeight;
+
+            const newPipe = {
+                x: canvas.width,
+                topHeight: topHeight,
+                bottomY: topHeight + PIPE_GAP,
+                bottomHeight: canvas.height - (topHeight + PIPE_GAP) - GROUND_HEIGHT,
+                passed: false 
+            };
+            pipes.push(newPipe);
+        }
+
+        function updatePipes() {
+            for (let i = 0; i < pipes.length; i++) {
+                const pipe = pipes[i];
+                pipe.x -= PIPE_SPEED;
+
+                if (!pipe.passed && pipe.x + PIPE_WIDTH < player.x - player.radius) {
+                    score++;
+                    gameScoreDisplay.textContent = `PUNKTE: ${score}`;
+                    pipe.passed = true;
+                }
+
+                if (pipe.x + PIPE_WIDTH < 0) {
+                    pipes.splice(i, 1);
+                    i--;
+                } 
+            }
+        }
+
+        // --- Kollision ---
+        function checkCollisions() {
+            // 1. Boden und Decke
+            if (player.y + player.radius >= canvas.height - GROUND_HEIGHT || player.y - player.radius <= 0) {
+                gameOver();
+                return;
+            }
+
+            // 2. Kollision mit Rohren
+            for (const pipe of pipes) {
+                // Horizontaler Check: Ist der Vogel im Bereich des Rohrs?
+                if (player.x + player.radius > pipe.x && player.x - player.radius < pipe.x + PIPE_WIDTH) {
+                    
+                    // Vertikaler Check: Berührt der Vogel den oberen oder unteren Teil?
+                    const isHittingTop = player.y - player.radius < pipe.topHeight;
+                    const isHittingBottom = player.y + player.radius > pipe.bottomY;
+
+                    if (isHittingTop || isHittingBottom) {
+                        const birdLeftEdge = player.x - player.radius;
+                        const birdRightEdge = player.x + player.radius;
+                        
+                        const pipeLeftEdge = pipe.x;
+                        const pipeRightEdge = pipe.x + PIPE_WIDTH;
+
+                        if (birdRightEdge > pipeLeftEdge && birdLeftEdge < pipeRightEdge) {
+                             gameOver();
+                             return;
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Modal Event Listener ---
+
+        const disableCursorAndScroll = (state) => {
+             document.body.style.overflow = state ? 'hidden' : '';
+             // Wenn der Cursor auf Desktop sichtbar sein sollte, hier nur bei Mobile-Ansicht ausblenden
+             if (cursorTrail) cursorTrail.style.display = (state && !isMobile()) ? 'none' : (isMobile() ? 'none' : 'block');
+        };
+        
+        // Modal öffnen
+        openGameBtn.addEventListener('click', () => {
+            gameModal.classList.add('open');
+            disableCursorAndScroll(true);
+            initGame(); 
+        });
+
+        // Modal schließen über X-Button und Exit-Button
+        const closeGame = () => {
+            cancelAnimationFrame(gameLoopId);
+            clearInterval(pipeGeneratorId);
+            gameModal.classList.remove('open');
+            disableCursorAndScroll(false);
+            isGameRunning = false;
+        };
+
+        closeGameBtn.addEventListener('click', closeGame);
+        gameExitButton.addEventListener('click', closeGame);
+        
+        // Klick auf den Start/Restart Button
+        gameActionButton.addEventListener('click', () => {
+            if (!isGameRunning) {
+                initGame(); 
+                startGame(); 
+            }
+        });
+
+        // Tastatur-Event für Springen und Schließen
+        document.addEventListener('keydown', (e) => {
+            if (gameModal.classList.contains('open')) {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    if (!isGameRunning) {
+                        gameActionButton.click(); 
+                    } else {
+                        playerJump();
+                    }
+                } else if (e.key === 'Escape') {
+                    closeGame();
+                }
+            }
+        });
+
+        // Beim Laden des Skripts initialisieren
+        document.addEventListener('DOMContentLoaded', () => {
+            updateHeaderAndScrollProgress(); 
+        });
+        
+        // Finaler Resize Listener für das Canvas (nur bei geöffnetem Modal)
+        window.addEventListener('resize', () => {
+            if (gameModal.classList.contains('open')) {
+                 resizeCanvas();
+            }
+        });
+    </script>
+
+</body>
+</html>
